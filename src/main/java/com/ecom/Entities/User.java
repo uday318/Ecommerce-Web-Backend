@@ -1,5 +1,10 @@
 package com.ecom.Entities;
 
+import java.util.Collection;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import com.ecom.DTO.RoleEnum;
 
 import jakarta.persistence.Entity;
@@ -10,7 +15,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 @Entity
-public class User {
+public class User implements UserDetails{
+	
+	public static final String LOGIN_USER = "LOGIN_USER";
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
@@ -121,6 +128,15 @@ public class User {
 	}
 	public void setIsActive(Boolean isActive) {
 		this.isActive = isActive;
+	}
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		return null;
+	}
+	
+	@Override
+	public String getUsername() {
+		return email;
 	}
 	
 	

@@ -3,6 +3,10 @@ package com.ecom.ServiceImpl;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.ecom.DTO.RoleEnum;
@@ -10,6 +14,7 @@ import com.ecom.Entities.GenericResponseEntity;
 import com.ecom.Entities.User;
 import com.ecom.Exception.DataValidationException;
 import com.ecom.Repository.UserRepository;
+import com.ecom.Service.JWTService;
 import com.ecom.Service.UserService;
 
 @Service
@@ -17,8 +22,14 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	private UserRepository userRepo;
+	
+	@Autowired
+	AuthenticationManager authManager;
+	
+	@Autowired
+	private JWTService jwtService;
 
-	// private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
+	private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
 	@Override
 	public GenericResponseEntity registerUser(User user) {
@@ -37,12 +48,49 @@ public class UserServiceImpl implements UserService {
 		}
 		validateDuplicateUser(user.getEmail());
 
-		// user.setPassword(encoder.encode(user.getPassword()));
+		user.setPassword(encoder.encode(user.getPassword()));
 		user.setRole(RoleEnum.USER);
 		user.setIsActive(true);
 		userRepo.save(user);
 		return new GenericResponseEntity(201, "User registered Successfully.");
 
+	}
+	
+	public String verify(User user) {
+
+		User dbUser = userRepo.findByEmail(user.getEmail());
+		
+		if (dbUser.getIsActive() == false) {
+			throw new DataValidationException("Unable to login.Please contact to your organization admin");
+		}
+
+		Authentication authentication = authManager
+				.authenticate(new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword()));
+
+//		if (authentication.isAuthenticated()) {
+//			// Load and set roles and permissions
+//			Set<Role> roles = dbUser.getRoles();
+//
+//			if (roles != null && !roles.isEmpty()) {
+//				for (Role role : roles) {
+//					Long roleId = role.getId();
+//					List<Permission> permissionList = permissionRepo.findByRoleId(roleId);
+//
+//					// Add role-based authorities
+//					dbUser.getAuthorities().add(new SimpleGrantedAuthority("ROLE_" + role.getName()));
+//
+//					// Add permission-based authorities
+//					List<GrantedAuthority> authorities = permissionList.stream()
+//							.map(permission -> new SimpleGrantedAuthority(permission.getCode()))
+//							.collect(Collectors.toList());
+//
+//					dbUser.getAuthorities().addAll(authorities);
+		if (authentication.isAuthenticated()) {
+			String jwt = jwtService.generateToken(dbUser);
+			return "token = \"" + jwt + "\"";
+		} else {
+			return "fail";
+		}
 	}
 
 	private void validateDuplicateUser(String emailId) {
@@ -78,9 +126,9 @@ public class UserServiceImpl implements UserService {
 		dbuser.setCity(user.getCity());
 		dbuser.setPincode(user.getPincode());
 		dbuser.setState(user.getState());
-		dbuser.setPassword(user.getPassword());
+		//dbuser.setPassword(user.getPassword());
 
-		// dbuser.setPassword(encoder.encode(user.getPassword()));
+		dbuser.setPassword(encoder.encode(user.getPassword()));
 
 		userRepo.save(dbuser);
 		return new GenericResponseEntity(202, "User updated Successfully.");

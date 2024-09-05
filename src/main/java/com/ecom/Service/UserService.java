@@ -19,4 +19,6 @@ public interface UserService {
 
 	List<User> getAllUsers();
 
+	String verify(User user);
+
 }

@@ -3,6 +3,7 @@ package com.ecom;
 import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import com.ecom.DTO.RoleEnum;
@@ -40,11 +41,16 @@ public class DayZeroScript {
 			user.setPincode("416115");
 			user.setState("Maharastra");
 			user.setIsActive(true);
-			//encodePassword(user);
+			encodePassword(user);
 			user = userRepo.saveAndFlush(user);
 			return user;
 		}
 		return dbUser;
+	}
+	
+	private void encodePassword(User user) {
+		final String plainPassword = user.getPassword();
+		user.setPassword(new BCryptPasswordEncoder(12).encode(plainPassword));
 	}
 
 }

@@ -20,6 +20,7 @@ import com.ecom.Service.OrderService;
 import com.ecom.Service.UserService;
 
 import jakarta.servlet.http.HttpSession;
+import jakarta.transaction.Transactional;
 
 @RestController
 @RequestMapping("/user")
@@ -38,6 +39,12 @@ public class UserController {
 	public ResponseEntity<GenericResponseEntity> createUser(@RequestBody User user) {
 		GenericResponseEntity gre = userService.registerUser(user);
 		return new ResponseEntity<>(gre, HttpStatus.CREATED);
+	}
+	
+	@PostMapping("/login")
+	@Transactional
+	public String login(@RequestBody User user) {
+		return userService.verify(user);
 	}
 	
 	@PutMapping("/update-profile/{userId}")
